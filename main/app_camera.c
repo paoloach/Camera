@@ -5,11 +5,8 @@
 #include "esp_camera.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
+#include "app_settings.h"
 #include "app_camera.h"
-
-#define CONFIG_CAMERA_MODEL_AI_THINKER
-
-#include "Pins.h"
 
 static const char *TAG = "Camera";
 

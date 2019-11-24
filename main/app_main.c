@@ -1,13 +1,16 @@
-#include "app_camera.h"
-#include "app_httpd.h"
-#include "esp_event.h"
-#include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
+#include "esp_event.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include "tcpip_adapter.h"
+#include "nvs_flash.h"
 #include "sdkconfig.h"
-#include "wifi.h"
-#include <esp_log.h>
-#include <nvs_flash.h>
+#include "app_settings.h"
+#include "app_wifi.h"
+#include "app_camera.h"
+#include "app_httpd.h"
+#include "app_lcd.h"
 #ifdef CONFIG_MDNS_ENABLED
 #include "mdns.h"
 #endif
@@ -17,41 +20,34 @@
 
 EventGroupHandle_t event_group;
 
-static void initNvs();
-
 void app_shutdown() {
+  app_settings_shutdown();
+  #ifdef CONFIG_USE_SSD1306_LCD_DRIVER
+  app_lcd_shutdown();
+  #endif
+  #ifdef CONFIG_LED_ILLUMINATOR_ENABLED
   app_illuminator_shutdown();
+  #endif
   #ifdef CONFIG_MDNS_ENABLED
   mdns_free();
   #endif
-
   app_httpd_shutdown();
   app_wifi_shutdown();
   app_camera_shutdown();
 }
 
-static void initNvs() {
-  //Initialize NVS
-  ESP_LOGI("initNVS", "Initializing NVS");
-  esp_err_t ret = nvs_flash_init();
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    ret = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK(ret);
-  ESP_LOGI("initNVS", "NVS Initialized");
-}
-
 void app_main()
 {
-
     EventBits_t uxBits;
 
   ESP_ERROR_CHECK(esp_event_loop_create_default());   
   event_group = xEventGroupCreate();
-  initNvs();
+  
+  app_settings_startup();    
   app_camera_startup();
+  #ifdef CONFIG_LED_ILLUMINATOR_ENABLED
   app_illuminator_startup();
+  #endif
   app_wifi_startup();
   
   for (;;) {
@@ -62,12 +58,15 @@ void app_main()
       #endif
       #ifdef CONFIG_MDNS_ENABLED
       ESP_ERROR_CHECK(mdns_init());
-//      ESP_ERROR_CHECK(mdns_hostname_set(settings.hostname));
-//      ESP_ERROR_CHECK(mdns_instance_name_set(settings.mdns_instance));
+      ESP_ERROR_CHECK(mdns_hostname_set(settings.hostname));
+      ESP_ERROR_CHECK(mdns_instance_name_set(settings.mdns_instance));
       mdns_txt_item_t serviceTxtData[1] = { {"path","/"} };
-//      ESP_ERROR_CHECK( mdns_service_add(settings.mdns_instance, "_http", "_tcp", 80, serviceTxtData, 1) );
+      ESP_ERROR_CHECK( mdns_service_add(settings.mdns_instance, "_http", "_tcp", 80, serviceTxtData, 1) );
       #endif
       app_httpd_startup();
+      #ifdef CONFIG_USE_SSD1306_LCD_DRIVER
+      app_lcd_startup();
+      #endif
       return;
     }
   }

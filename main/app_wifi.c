@@ -11,11 +11,10 @@
 #include "lwip/dns.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
-#include "wifi.h"
+#include "app_settings.h"
+#include "app_wifi.h"
 
 static const char *TAG = "wifi station";
-static const char * SSID="TP-LINK_2.4";
-static const char * PASSWORD="caciottinatuttook";
 
 extern EventGroupHandle_t event_group;
 
@@ -79,14 +78,40 @@ static void wifi_dump_ap_info() {
 
 void wifi_init_softap()
 {
+    if (strcmp(CONFIG_SERVER_IP, "192.168.4.1"))
+    {
+        int a, b, c, d;
+        sscanf(CONFIG_SERVER_IP, "%d.%d.%d.%d", &a, &b, &c, &d);
+        tcpip_adapter_ip_info_t ip_info;
+        IP4_ADDR(&ip_info.ip, a, b, c, d);
+        IP4_ADDR(&ip_info.gw, a, b, c, d);
+        IP4_ADDR(&ip_info.netmask, 255, 255, 255, 0);
+        ESP_ERROR_CHECK(tcpip_adapter_dhcps_stop(WIFI_IF_AP));
+        ESP_ERROR_CHECK(tcpip_adapter_set_ip_info(WIFI_IF_AP, &ip_info));
+        ESP_ERROR_CHECK(tcpip_adapter_dhcps_start(WIFI_IF_AP));
+    }
+    wifi_config_t wifi_config;
+    memset(&wifi_config, 0, sizeof(wifi_config_t));
+    snprintf((char*)wifi_config.ap.ssid, 32, "%s", CONFIG_ESP_WIFI_AP_SSID);
+    wifi_config.ap.ssid_len = strlen((char*)wifi_config.ap.ssid);
+    snprintf((char*)wifi_config.ap.password, 64, "%s", CONFIG_ESP_WIFI_AP_PASSWORD);
+    wifi_config.ap.max_connection = 1;
+    wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+    if (strlen(CONFIG_ESP_WIFI_AP_PASSWORD) == 0) {
+        wifi_config.ap.authmode = WIFI_AUTH_OPEN;
+    }
 
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
+    xEventGroupSetBits(event_group, WIFI_SOFTAP_BIT);
+    ESP_LOGI(TAG, "wifi_init_softap finished.SSID:%s password:%s",
+             CONFIG_ESP_WIFI_AP_SSID, CONFIG_ESP_WIFI_AP_PASSWORD);
 }
 
 static void wifi_init_sta(void) {
     wifi_config_t wifi_config;
     memset(&wifi_config, 0, sizeof(wifi_config_t));
-    snprintf((char*)wifi_config.sta.ssid, 32, "%s", SSID);
-    snprintf((char*)wifi_config.sta.password, 64, "%s", PASSWORD);
+    snprintf((char*)wifi_config.sta.ssid, 32, "%s", settings.wifi_ssid);
+    snprintf((char*)wifi_config.sta.password, 64, "%s", settings.wifi_password);
     ESP_LOGI(TAG, "Connecting to AP SSID:%s password:%s",
         wifi_config.sta.ssid, wifi_config.sta.password);
 
@@ -121,7 +146,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t* event = (wifi_event_sta_disconnected_t*) event_data;
         ESP_LOGW(TAG,"Station disconnected (reason=%d)",event->reason);
-        if (s_retry_num <3) {
+        if (s_retry_num <CONFIG_ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             xEventGroupClearBits(event_group, WIFI_CONNECTED_BIT);
             s_retry_num++;
@@ -136,7 +161,8 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
         }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&event->ip_info.ip));
+        settings.ip = event->ip_info.ip;
+        ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&settings.ip));
         s_retry_num = 0;
         xEventGroupSetBits(event_group, WIFI_CONNECTED_BIT);
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
@@ -146,9 +172,18 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 
 void app_wifi_startup() {
     tcpip_adapter_init();
-    tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA,"CAMERA ESP");
-    tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_AP,"CAMERA ESP");
-
+    tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA,settings.hostname);
+    tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_AP,settings.hostname);
+    if (!settings.dhcp  ) {
+      tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
+      tcpip_adapter_ip_info_t info;
+      info.ip.addr = settings.ip.addr;
+      info.gw.addr = settings.gateway.addr;
+      info.netmask.addr = settings.netmask.addr;
+	  tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &info);
+      dns_setserver(1, &settings.dns1);
+      dns_setserver(2, &settings.dns2);
+    }
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
