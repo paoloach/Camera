@@ -24,10 +24,5 @@ set(COMPONENT_PRIV_INCLUDEDIRS
         ../components/esp32-camera/conversions/private_include
         )
 
-set(COMPONENT_EMBED_FILES
-        "www/index.html.gz"
-        "www/style.css.gz"
-        "www/script.js.gz"
-        )
 
 register_component()
