@@ -54,7 +54,7 @@ void app_main()
 	  uxBits = xEventGroupWaitBits(event_group,WIFI_CONNECTED_BIT | WIFI_SOFTAP_BIT,pdFALSE,pdFALSE,500 / portTICK_PERIOD_MS);
 	  if (uxBits > 0) {	  
       #ifdef CONFIG_SNTP_ENABLED
-      app_sntp_startup();
+      //app_sntp_startup();
       #endif
       #ifdef CONFIG_MDNS_ENABLED
       ESP_ERROR_CHECK(mdns_init());

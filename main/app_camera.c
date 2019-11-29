@@ -11,9 +11,10 @@
 static const char *TAG = "Camera";
 
 void app_camera_reset_defaults() {
+  ESP_LOGI(TAG, "---------------- RESET_DEFAULT");
   sensor_t *s = esp_camera_sensor_get();
   if (s != NULL) {
-    s->set_framesize(s,FRAMESIZE_CIF);
+    s->set_framesize(s,FRAMESIZE_SVGA);
     s->set_quality(s,14);
     s->set_brightness(s,0);
     s->set_contrast(s,0);
@@ -71,8 +72,8 @@ void app_camera_startup() {
 
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
-      ESP_LOGE(TAG, "Camera init failed with error 0x%x", err);
-      return;
+    ESP_LOGE(TAG, "Camera init failed with error 0x%x", err);
+    return;
   }
 
   app_camera_reset_defaults();

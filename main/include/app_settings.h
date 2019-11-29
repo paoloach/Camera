@@ -2,6 +2,7 @@
 #define APP_SETTINGS_H_
 
 #include "lwip/ip4_addr.h"
+#include <esp_netif_ip_addr.h>
 
 #define LEN_WIFI_SSID     32
 #define LEN_WIFI_PASSWORD 64
@@ -27,7 +28,7 @@ struct app_settings_t {
   char timezone[LEN_TIMEZONE];
   #endif
   bool dhcp;
-  ip4_addr_t ip;
+  esp_ip4_addr_t ip;
   ip4_addr_t netmask;
   ip4_addr_t gateway;
   ip4_addr_t dns1;
