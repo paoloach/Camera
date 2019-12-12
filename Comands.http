@@ -1,0 +1,37 @@
+# curl -d "client_id=273026088970-41hpa38mfeih48q383jq29ra5b8fqs4b.apps.googleusercontent.com&scope=https://www.googleapis.com/auth/drive.file%20profile"    https://accounts.google.com/o/oauth2/device/code
+POST https://accounts.google.com/o/oauth2/device/code
+Content-Type: application/x-www-form-urlencoded
+
+client_id=273026088970-41hpa38mfeih48q383jq29ra5b8fqs4b.apps.googleusercontent.com&scope=https://www.googleapis.com/auth/drive.file%20profile
+
+###
+
+# curl -d "client_id=273026088970-41hpa38mfeih48q383jq29ra5b8fqs4b.apps.googleusercontent.com&client_secret=MFgUs597rl8GDgFp5BPd7Inr&code=AH-1Ng2e3vcUwkf3nnDCjPY0amNfEye75x4Jc6U7kNGfH68SDBKaB4_Wt0vCQfm-ARJCrBXCvsp9hmqRWaAqEtmOFnXe1m7hyg&grant_type=http://oauth.net/grant_type/device/1.0"  -H "Content-Type: application/x-www-form-urlencoded"  https://oauth2.googleapis.com/token
+POST https://oauth2.googleapis.com/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id=273026088970-41hpa38mfeih48q383jq29ra5b8fqs4b.apps.googleusercontent.com&client_secret=MFgUs597rl8GDgFp5BPd7Inr&code=AH-1Ng1DreAMa2SzSVVZUnjeCGcyhGijFRIrX5C_aTMZKrU5575YmvvQqQtUkvTVji2HvzaUgK5Kq4-p3IIeP4tcJq5aiJMObQ&grant_type=http://oauth.net/grant_type/device/1.0
+
+###
+
+# curl -H "Authorization: Bearer ya29.Il-zB39kj_7k-XQZJATUjny8pPf1jXEjVsgswilQ--vXRm4mN5Y7svF1mDej_4G10MDv3BmMZh1D4aTzyNJJBsUgQruRpBOIdn9UD3nG7QagMmMzHttOK0-_RT6sM1Hdcw" https://www.googleapis.com/drive/v3/about?fields=*
+GET https://www.googleapis.com/drive/v3/files?q=mimeType = 'application/vnd.google-apps.folder' and name='serra'
+Authorization: Bearer ya29.Il-0B-iLYiS3DcmWkAiiWTNJVJQSTXBtD-STGcpXQvdBWBQs1hQsmMGqDEnClj3g0LOywX2yoizHSnKYyciwGgciwS04Wbg3cIsGAgmrz5Y-t21RTu8Lq6waW6N-w9SgAw
+
+###
+
+POST https://www.googleapis.com/drive/v3/files
+Authorization: Bearer ya29.Il-0B-iLYiS3DcmWkAiiWTNJVJQSTXBtD-STGcpXQvdBWBQs1hQsmMGqDEnClj3g0LOywX2yoizHSnKYyciwGgciwS04Wbg3cIsGAgmrz5Y-t21RTu8Lq6waW6N-w9SgAw
+Content-Type: application/json
+
+{
+  "mimeType": "application/json",
+  "name": "test"
+  }
+
+###
+
+DELETE https://www.googleapis.com/drive/v3/files/1WQ8y-RP9QccBqsNsppF4oK1QTq3DhMlE
+Authorization: Bearer ya29.Il-0B-iLYiS3DcmWkAiiWTNJVJQSTXBtD-STGcpXQvdBWBQs1hQsmMGqDEnClj3g0LOywX2yoizHSnKYyciwGgciwS04Wbg3cIsGAgmrz5Y-t21RTu8Lq6waW6N-w9SgAw
+
+###

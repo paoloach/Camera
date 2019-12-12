@@ -11,8 +11,8 @@
 #include "lwip/dns.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
-#include "app_settings.h"
 #include "app_wifi.h"
+#include "settings.h"
 
 static const char *TAG = "wifi station";
 static const char * SSID="TP-LINK_2.4";
@@ -163,8 +163,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
     }
   } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
     ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-    settings.ip = event->ip_info.ip;
-    ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&settings.ip));
+    ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&event->ip_info.ip));
     s_retry_num = 0;
     xEventGroupSetBits(event_group, WIFI_CONNECTED_BIT);
   } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
@@ -174,18 +173,18 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 
 void app_wifi_startup() {
   tcpip_adapter_init();
-  tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA,settings.hostname);
-  tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_AP,settings.hostname);
-  if (!settings.dhcp  ) {
-    tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
-    tcpip_adapter_ip_info_t info;
-    info.ip.addr = settings.ip.addr;
-    info.gw.addr = settings.gateway.addr;
-    info.netmask.addr = settings.netmask.addr;
-    tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &info);
-    dns_setserver(1, &settings.dns1);
-    dns_setserver(2, &settings.dns2);
-  }
+  tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA,HOSTNAME);
+  tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_AP,HOSTNAME);
+//  if (!settings.dhcp  ) {
+//    tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
+//    tcpip_adapter_ip_info_t info;
+//    info.ip.addr = settings.ip.addr;
+//    info.gw.addr = settings.gateway.addr;
+//    info.netmask.addr = settings.netmask.addr;
+//    tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &info);
+//    dns_setserver(1, &settings.dns1);
+//    dns_setserver(2, &settings.dns2);
+//  }
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
   ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));

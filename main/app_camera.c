@@ -5,7 +5,6 @@
 #include "esp_camera.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "app_settings.h"
 #include "app_camera.h"
 
 static const char *TAG = "Camera";
