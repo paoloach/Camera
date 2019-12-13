@@ -10,7 +10,8 @@ set(COMPONENT_SRCS
         gdriver/HttpData.cpp
         gdriver/HttpClient.cpp
         gdriver/GDriverToken.cpp
-        gdriver/TokenCreation.cpp)
+        gdriver/TokenCreation.cpp
+        gdriver/gDriverMethods.cpp)
 
 
 set(COMPONENT_REQUIRES

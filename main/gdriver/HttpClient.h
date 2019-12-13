@@ -19,7 +19,12 @@ struct Property {
 
     Property(const char *key, uint16_t keyLen, const char *value, uint16_t valueLen) : key(key), keyLen(keyLen),
                                                                                        value(value),
-                                                                                       valueLen(valueLen) {}
+                                                                                       valueLen(valueLen) {
+        if (keyLen==0)
+            keyLen=strlen(key);
+        if (valueLen==0)
+            valueLen=strlen(value);
+    }
 };
 
 class HttpClient {
@@ -27,6 +32,7 @@ public:
     HttpClient();
 
     esp_err_t post(const char *url, std::list<Property> &&properties, std::list<Property> &&headers);
+    esp_err_t postJson(const char *url, std::list<Property> &&properties, std::list<Property> &&headers, bool includeAuth);
 
     esp_err_t get(const char *url, std::list<Property> &&headers, bool includeAuth);
 

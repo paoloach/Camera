@@ -8,12 +8,18 @@
 #include <cstring>
 #include <esp_log.h>
 #include <settings.h>
+#include <cJSON.h>
 
 
 template<typename T>
 using deleted_unique_ptr = std::unique_ptr<T,std::function<void(T*)>>;
 
-
+inline deleted_unique_ptr<cJSON> createCJson(char * data) {
+    return deleted_unique_ptr<cJSON>(cJSON_Parse(reinterpret_cast<const char *>(data)),
+                                     [](cJSON *cjson) {
+                                         cJSON_Delete(cjson);
+                                     });
+}
 
 HttpClient::HttpClient() {
   esp_http_client_config_t config = {
@@ -79,6 +85,59 @@ esp_err_t HttpClient::post(const char *url, std::list<Property> &&properties,
   }
   return ESP_OK;
 }
+
+esp_err_t HttpClient::postJson(const char * url, std::list<Property> && properties, std::list<Property> && headers, bool includeAuth) {
+    uint16_t len = 0;
+    esp_err_t error;
+
+    ESP_LOGI(TAG, "POST at %s", url);
+
+    data.clear();
+
+    cJSON *body = cJSON_CreateObject();
+
+    for (auto &property : properties) {
+        cJSON_AddStringToObject(body, property.key, property.value);
+    }
+
+    char * postData = cJSON_Print(body);
+
+    esp_http_client_set_url(client.get(), url);
+    esp_http_client_set_method(client.get(),HTTP_METHOD_POST);
+
+    for (auto &header : headers) {
+        error = esp_http_client_set_header(client.get(), header.key, header.value);
+        if (error != ESP_OK) {
+            ESP_LOGE(TAG, "Error setting header: 0x%x", error);
+        }
+    }
+
+    if (includeAuth){
+        uint16_t bearerLen = BEARER_HEADER_LEN+getAccessTokenLen();
+        auto bearer = std::unique_ptr<char>(new char[bearerLen+1]);
+        memcpy(bearer.get(), BEARER_HEADER, BEARER_HEADER_LEN);
+        memcpy(bearer.get()+BEARER_HEADER_LEN, getAccessToken(), getAccessTokenLen());
+        bearer.get()[bearerLen]=0;
+        error = esp_http_client_set_header(client.get(), AUTHORIZATION_HEADER, bearer.get());
+        if (error != ESP_OK) {
+            ESP_LOGE(TAG, "Error setting header: %d", error);
+        }
+
+    }
+
+
+   error = esp_http_client_set_post_field(client.get(), (const char *)postData, len);
+    if (error != ESP_OK) {
+        ESP_LOGE(TAG, "Error setting post field: %d", error);
+    }
+    error = esp_http_client_perform(client.get());
+    if (error != ESP_OK) {
+        ESP_LOGI(TAG, "Error perform post request field: %d", error);
+    }
+    return ESP_OK;
+}
+
+
 esp_err_t HttpClient::eventHandler(esp_http_client_event_t *evt) {
   auto *httpClient = static_cast<HttpClient *>(evt->user_data);
   switch (evt->event_id) {

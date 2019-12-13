@@ -9,25 +9,40 @@
 #include "settings.h"
 #include <cJSON.h>
 #include "gdriver/delete_unique_ptr.h"
+#include "gdriver/gDriverMethods.h"
 
 static constexpr const char *TAG = "gDriverHttp";
 
+inline deleted_unique_ptr<cJSON> createCJson(char * data) {
+    return deleted_unique_ptr<cJSON>(cJSON_Parse(reinterpret_cast<const char *>(data)),
+                              [](cJSON *cjson) {
+                                  cJSON_Delete(cjson);
+                              });
+}
 
 esp_err_t checkFolderExistHandler(httpd_req_t *req, char * folderName) {
-
     if (gDriverToken.tokenValid()) {
-        HttpClient httpClient;
-
-        auto error = httpClient.get("https://www.googleapis.com/drive/v3/files?q=mimeType%20=%20'application/vnd.google-apps.folder'%20and%20name='serra'", {}, true);
-        if (error != ESP_OK) {
-            ESP_LOGE(TAG, "Internal error getting user code");
-        } else {
-            auto body(httpClient.getBody());
-            if (body) {
-                ESP_LOGI(TAG, "%s", body.get());
-                httpd_resp_sendstr(req, body.get());
-                httpd_resp_sendstr(req, "\n\r");
+        auto body = searchForFolder(folderName);
+        if (body) {
+            ESP_LOGI(TAG, "%s", body.get());
+            auto root = createCJson(body.get());
+            cJSON *error = cJSON_GetObjectItem(root.get(), "error");
+            if (error != nullptr){
+                httpd_resp_sendstr(req, reinterpret_cast<char *>(error->valuestring));
+            } else {
+                cJSON *files = cJSON_GetObjectItem(root.get(), "files");
+                if (files == nullptr){
+                    httpd_resp_sendstr(req, "Unable to parse response \r\n");
+                    return ESP_OK;
+                }
+                uint16_t  arraySize = cJSON_GetArraySize(files);
+                if (arraySize == 0){
+                    httpd_resp_sendstr(req, "Folder doesn't exist");
+                } else {
+                    httpd_resp_sendstr(req, "Folder exist");
+                }
             }
+            httpd_resp_sendstr(req, "\n\r");
         }
 
     } else {
@@ -36,6 +51,39 @@ esp_err_t checkFolderExistHandler(httpd_req_t *req, char * folderName) {
 
     return ESP_OK;
 }
+
+esp_err_t createFolder(httpd_req_t *req, char * folderName) {
+    if (gDriverToken.tokenValid()) {
+        auto body = createFolder(folderName);
+        if (body) {
+            ESP_LOGI(TAG, "%s", body.get());
+            auto root = createCJson(body.get());
+            cJSON *error = cJSON_GetObjectItem(root.get(), "error");
+            if (error != nullptr){
+                httpd_resp_sendstr(req, reinterpret_cast<char *>(error->valuestring));
+            } else {
+                cJSON *files = cJSON_GetObjectItem(root.get(), "files");
+                if (files == nullptr){
+                    httpd_resp_sendstr(req, "Unable to parse response \r\n");
+                    return ESP_OK;
+                }
+                uint16_t  arraySize = cJSON_GetArraySize(files);
+                if (arraySize == 0){
+                    httpd_resp_sendstr(req, "Folder doesn't exist");
+                } else {
+                    httpd_resp_sendstr(req, "Folder exist");
+                }
+            }
+            httpd_resp_sendstr(req, "\n\r");
+        }
+
+    } else {
+        httpd_resp_sendstr(req, "token expired or invalid\n\r");
+    }
+
+    return ESP_OK;
+}
+
 
 esp_err_t getUserCodeHandler(httpd_req_t *req) {
     HttpClient httpClient;
@@ -63,10 +111,7 @@ esp_err_t getUserCodeHandler(httpd_req_t *req) {
 
             ESP_LOGI(TAG, "%s", body.get());
 
-            auto root = deleted_unique_ptr<cJSON>(cJSON_Parse(reinterpret_cast<const char *>(body.get())),
-                                                  [](cJSON *cjson) {
-                                                      cJSON_Delete(cjson);
-                                                  });
+            auto root = createCJson(body.get());
             if (root) {
                 cJSON *error = cJSON_GetObjectItem(root.get(), "error");
                 if (error != nullptr) {
