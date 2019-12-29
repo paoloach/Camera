@@ -32,13 +32,27 @@ public:
     HttpClient();
 
     esp_err_t post(const char *url, std::list<Property> &&properties, std::list<Property> &&headers);
-    esp_err_t postJson(const char *url, std::list<Property> &&properties, std::list<Property> &&headers, bool includeAuth);
+    esp_err_t postJson(const char *url, const char * body, std::list<Property> &&headers, bool includeAuth);
 
     esp_err_t get(const char *url, std::list<Property> &&headers, bool includeAuth);
 
     std::unique_ptr<char> getBody() { return data.getContent(); }
 
 private:
+    esp_err_t setUrl(const char * url){
+        return esp_http_client_set_url(client.get(), url);
+    }
+
+    esp_err_t setMethod(esp_http_client_method_t method){
+        return esp_http_client_set_method(client.get(), method);
+    }
+
+
+    esp_err_t setHeader(const char * key, const char * value){
+        return esp_http_client_set_header(client.get(), key, value);
+    }
+
+
     static constexpr const char *TAG = "HttpClient";
     deleted_unique_ptr<esp_http_client> client;
     HttpData data;

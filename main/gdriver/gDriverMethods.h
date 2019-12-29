@@ -6,5 +6,6 @@
 
 #include <memory>
 
-std::unique_ptr<char> searchForFolder(char * folderName);
-std::unique_ptr<char> createFolder(char * folderName);
+std::unique_ptr<char> searchForFolder(const char * folderName);
+std::unique_ptr<char> createFolder(const char * folderName);
+

@@ -1,0 +1,37 @@
+###
+
+POST  https://accounts.google.com/o/oauth2/device/code?client_id=273026088970-41hpa38mfeih48q383jq29ra5b8fqs4b.apps.googleusercontent.com&scope=https://www.googleapis.com/auth/drive.file%20profile
+
+#{
+#  "device_code": "AH-1Ng359iSodAhw8VkG7rxrP0ygbLcgaiZC7TOEWViO6S3ajUzlgk8pc5SaS1H6oA3CTvZG1kOZz85Z3RDWpyASjjxY5FHTCA",
+#  "user_code": "GJN-ZHP-PVH",
+#  "expires_in": 1800,
+#  "interval": 5,
+#  "verification_url": "https://www.google.com/device"
+#}
+
+###
+
+POST https://oauth2.googleapis.com/token?client_id=273026088970-41hpa38mfeih48q383jq29ra5b8fqs4b.apps.googleusercontent.com&client_secret=MFgUs597rl8GDgFp5BPd7Inr&code=AH-1Ng359iSodAhw8VkG7rxrP0ygbLcgaiZC7TOEWViO6S3ajUzlgk8pc5SaS1H6oA3CTvZG1kOZz85Z3RDWpyASjjxY5FHTCA&grant_type=http://oauth.net/grant_type/device/1.0
+
+#{
+#  "access_token": "ya29.Il-3Bxo0D_MalsFG73evooJt8BUBJJxvUddGinOyn6paiCquDxczpdvBjV0CGyWiyuj3rGgZSKcgg5ZB0FosLxz3NRB8gVBnSgdIlK-I71GzZfG5E7OMwJ6-wTDShMIBog",
+#  "expires_in": 3600,
+#  "refresh_token": "1//09OGetI7h1xsvCgYIARAAGAkSNwF-L9IrAcniYAHLR-X2bFrML3PSFYOju2gTWMHcWlxkB850crxj43auidFIBqrwIi21wpQWPmQ",
+#  "scope": "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile",
+#  "token_type": "Bearer",
+#  "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjQ3NDU2YjgwNjllNDM2NWU1MTdjYTVlMjk3NTdkMWE5ZWZhNTY3YmEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIyNzMwMjYwODg5NzAtNDFocGEzOG1mZWloNDhxMzgzanEyOXJhNWI4ZnFzNGIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyNzMwMjYwODg5NzAtNDFocGEzOG1mZWloNDhxMzgzanEyOXJhNWI4ZnFzNGIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDI1OTQ5OTc2ODg5NTY4MDE3NTMiLCJhdF9oYXNoIjoiZHZPSUlXcHZPRnJodDlkcnBLX2djZyIsIm5hbWUiOiJwYW9sbyBhY2hkamlhbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vLXgxZXpOUVZLU1EwL0FBQUFBQUFBQUFJL0FBQUFBQUFBQUFBL0FDSGkzcmNqVV85RTM1UTRPS3dtUFVKVWE1NHYtRnJnOUEvczk2LWMvcGhvdG8uanBnIiwiZ2l2ZW5fbmFtZSI6InBhb2xvIiwiZmFtaWx5X25hbWUiOiJhY2hkamlhbiIsImxvY2FsZSI6Iml0IiwiaWF0IjoxNTc3NTE1NzM3LCJleHAiOjE1Nzc1MTkzMzd9.oaxJBvU4RurrGg6b9i5qMPVB0M1mA8V1Oyfh91kZyvAphBRku2ENcoLHSot2kZBNeHaIiTnoNb-eteIHwLiHRGir3G_3nEal4GNyEce70muzDgF_dnqxI7KF-QVnNcxwnhjRs5hCrVkj_Y34nDw-3BvEDt0XgoSRWj0FzCiSNsdHQmmqaG1G6UKdrz1Y76A6h7BRbBYSUXSkwmTHUWu4duByEtMGx9qEY6bGFgQrSKVo5vZKvIsrJKcRpazgHxHuPADWWlafzJMkCQQgG6U8nWbEMejV_PtfeKrUmgX7EbTHLqLTf4_RXaY22WQR0mKE0hAmo8zkfLREkyIq856VvA"
+#}
+
+###
+
+POST https://www.googleapis.com/drive/v3/files
+Authorization: Bearer ya29.Il-3Bxo0D_MalsFG73evooJt8BUBJJxvUddGinOyn6paiCquDxczpdvBjV0CGyWiyuj3rGgZSKcgg5ZB0FosLxz3NRB8gVBnSgdIlK-I71GzZfG5E7OMwJ6-wTDShMIBog
+content-type: application/json
+
+{
+  "mimeType": "application/vnd.google-apps.folder",
+  "name": "serra"
+}
+
+###

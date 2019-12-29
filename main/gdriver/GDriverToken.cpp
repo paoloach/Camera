@@ -175,6 +175,7 @@ void GDriverToken::init() {
 
 bool GDriverToken::refreshToken() {
     Property propRefreshToken(REFRESH_TOKEN, REFRESH_TOKEN_LEN, getRefreshToken(), getRefreshTokenLen());
+    Property propCode(CODE, CODE_LEN, deviceCode(), deviceCodeLen());
     Property propClientId(CLIENT_ID, CLIENT_ID_LEN, clientID(), clientIDLen());
     Property propSecret(CLIENT_SECRET, CLIENT_SECRET_LEN, clientSecret(), clientSecretLen());
     Property propGrant(GRANT, GRANT_LEN, GRANT_TYPE, GRANT_TYPE_LEN);
@@ -182,7 +183,7 @@ bool GDriverToken::refreshToken() {
     Property headerContentType(CONTENT_TYPE, CONTENT_TYPE_LEN, CONTENT_TYPE_FORM, CONTENT_TYPE_FORM_LEN);
 
     HttpClient httpClient;
-    auto error = httpClient.post("https://oauth2.googleapis.com/token", {propRefreshToken, propClientId, propSecret, propGrant},
+    auto error = httpClient.post("https://oauth2.googleapis.com/token", {propRefreshToken, propCode, propClientId, propSecret, propGrant},
                             {headerContentType});
 
     if (error != ESP_OK) {

@@ -11,9 +11,10 @@
 extern "C" {
 #endif
 void initGDriver();
-esp_err_t checkFolderExistHandler(httpd_req_t *req, char * folderName);
+esp_err_t checkFolderExistHandler(httpd_req_t *req);
+esp_err_t createFolderHandler(httpd_req_t *req);
 esp_err_t getUserCodeHandler(httpd_req_t *req);
-
+void saveImage(const char * folderName, uint8_t * data, size_t size );
 
 #ifdef __cplusplus
 }

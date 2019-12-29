@@ -1,16 +1,17 @@
 #include <gDriverHttp.h>
+#include <cJSON.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "esp_event.h"
 #include "esp_system.h"
 #include "esp_log.h"
-#include "tcpip_adapter.h"
+#include "esp_netif.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
 #include "settings.h"
 #include "app_wifi.h"
 #include "app_camera.h"
-#include "app_httpd.h"
+#include "Httpd.h"
 #include "app_lcd.h"
 #include "app_illuminator.h"
 #ifdef CONFIG_MDNS_ENABLED
@@ -21,15 +22,13 @@
 EventGroupHandle_t event_group;
 const char * HOSTNAME="achdjianCamera";
 
-
-
 void app_main()
 {
     EventBits_t uxBits;
 
   ESP_ERROR_CHECK(esp_event_loop_create_default());   
   event_group = xEventGroupCreate();
-  
+
   settingsStartup();
   app_camera_startup();
   app_illuminator_startup();

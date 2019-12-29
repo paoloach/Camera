@@ -113,6 +113,7 @@ static esp_err_t capture_handler(httpd_req_t *req) {
   size_t fb_len = 0;
   fb_len = fb->len;
   res = httpd_resp_send(req, (const char *)fb->buf, fb->len);
+  saveImage("serra", fb->buf, fb->len);
   esp_camera_fb_return(fb);
   int64_t fr_end = esp_timer_get_time();
   ESP_LOGI(TAG, "JPG: %uB %ums", (uint32_t)(fb_len),
@@ -123,9 +124,8 @@ static esp_err_t capture_handler(httpd_req_t *req) {
 void app_httpd_startup() {
   httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
-  config.max_uri_handlers = 1;
   config.max_open_sockets = 3;
-  config.max_uri_handlers = 6;
+  config.max_uri_handlers = 10;
   config.max_resp_headers = 3;
 
   httpd_uri_t capture_uri = {.uri = "/",
@@ -153,6 +153,11 @@ void app_httpd_startup() {
       .handler = checkFolderExistHandler,
       .user_ctx = NULL};
 
+    httpd_uri_t createFolder = {.uri = "/createFolder",
+            .method = HTTP_POST,
+            .handler = createFolderHandler,
+            .user_ctx = NULL};
+
   httpd_uri_t getUserCode = {.uri = "/getUserCode",
       .method = HTTP_GET,
       .handler = getUserCodeHandler,
@@ -165,6 +170,7 @@ void app_httpd_startup() {
     httpd_register_uri_handler(camera_httpd, &setSecretIdURI);
     httpd_register_uri_handler(camera_httpd, &setCodeURI);
     httpd_register_uri_handler(camera_httpd, &checkFolderExist);
+    httpd_register_uri_handler(camera_httpd, &createFolder);
     httpd_register_uri_handler(camera_httpd, &getUserCode);
   }
 }
