@@ -52,26 +52,27 @@ void saveImage(const char *folderName, uint8_t *data, size_t size) {
 }
 
 std::unique_ptr<char> createFolderAndGetID(const char * folderName){
-    auto response = createFolder(folderName);
-    if (!response){
-        ESP_LOGE(TAG, "Unable to create %s", folderName);
-        return std::unique_ptr<char>();
-    }
-    auto root = createCJson(response.get());
-    if (!root){
-        ESP_LOGE(TAG, "Unable to parse creation result of folder  %s", folderName);
-        return std::unique_ptr<char>();
-    }
-    cJSON *error = cJSON_GetObjectItem(root.get(), "error");
-    if (error != nullptr){
-        ESP_LOGE(TAG, "Error creating %s: %s", folderName, error->valuestring);
-        return std::unique_ptr<char>();
-    }
-    cJSON *id = cJSON_GetObjectItem(root.get(), "id");
-    if (id == nullptr){
-        ESP_LOGE(TAG, "Unable to get the folder id for  %s", folderName);
-        return std::unique_ptr<char>();
-    }
+//    auto response = createFolder(folderName);
+//    if (!response){
+//        ESP_LOGE(TAG, "Unable to create %s", folderName);
+//        return std::unique_ptr<char>();
+//    }
+//    auto root = createCJson(response.get());
+//    if (!root){
+//        ESP_LOGE(TAG, "Unable to parse creation result of folder  %s", folderName);
+//        return std::unique_ptr<char>();
+//    }
+//    cJSON *error = cJSON_GetObjectItem(root.get(), "error");
+//    if (error != nullptr){
+//        ESP_LOGE(TAG, "Error creating %s: %s", folderName, error->valuestring);
+//        return std::unique_ptr<char>();
+//    }
+//    cJSON *id = cJSON_GetObjectItem(root.get(), "id");
+//    if (id == nullptr){
+//        ESP_LOGE(TAG, "Unable to get the folder id for  %s", folderName);
+//        return std::unique_ptr<char>();
+//    }
+    return std::unique_ptr<char>();
 }
 
 
