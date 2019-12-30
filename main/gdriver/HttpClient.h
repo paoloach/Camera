@@ -27,11 +27,20 @@ struct Property {
     }
 };
 
+
+struct Header {
+    const char *key;
+    const char *value;
+};
+
+
 class HttpClient {
 public:
     HttpClient();
 
     esp_err_t post(const char *url, std::list<Property> &&properties, std::list<Property> &&headers);
+    esp_err_t post(const char *url,const char * body,  std::list<Header> &&headers);
+    esp_err_t patch(const char *url,const uint8_t * body,  size_t bodySize, std::list<Header> &&headers);
     esp_err_t postJson(const char *url, const char * body, std::list<Property> &&headers, bool includeAuth);
 
     esp_err_t get(const char *url, std::list<Property> &&headers, bool includeAuth);
@@ -65,5 +74,8 @@ private:
     }
 
     static esp_err_t eventHandler(esp_http_client_event_t *evt);
+
+    void addAuthorization();
+    void addContentLength(size_t size);
 };
 

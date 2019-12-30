@@ -10,7 +10,7 @@
 
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "app_illuminator.h"
+#include "cameraIlluminator.h"
 #include "settings.h"
 #include "gDriverHttp.h"
 
@@ -147,17 +147,6 @@ void app_httpd_startup() {
       .handler = setDeviceCodeHandler,
       .user_ctx = NULL};
 
-
-  httpd_uri_t checkFolderExist = {.uri = "/isFolderExist",
-      .method = HTTP_GET,
-      .handler = checkFolderExistHandler,
-      .user_ctx = NULL};
-
-    httpd_uri_t createFolder = {.uri = "/createFolder",
-            .method = HTTP_POST,
-            .handler = createFolderHandler,
-            .user_ctx = NULL};
-
   httpd_uri_t getUserCode = {.uri = "/getUserCode",
       .method = HTTP_GET,
       .handler = getUserCodeHandler,
@@ -169,8 +158,6 @@ void app_httpd_startup() {
     httpd_register_uri_handler(camera_httpd, &setClientIdUri);
     httpd_register_uri_handler(camera_httpd, &setSecretIdURI);
     httpd_register_uri_handler(camera_httpd, &setCodeURI);
-    httpd_register_uri_handler(camera_httpd, &checkFolderExist);
-    httpd_register_uri_handler(camera_httpd, &createFolder);
     httpd_register_uri_handler(camera_httpd, &getUserCode);
   }
 }

@@ -11,7 +11,7 @@
 #include "lwip/dns.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
-#include "app_wifi.h"
+#include "cameraWifi.h"
 #include "settings.h"
 
 static const char *TAG = "wifi station";

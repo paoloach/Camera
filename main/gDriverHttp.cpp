@@ -2,6 +2,7 @@
 // Created by paolo on 03/12/19.
 //
 
+#include <memory>
 #include "gDriverHttp.h"
 #include "gdriver/Constants.h"
 #include "gdriver/GDriverToken.h"
@@ -12,134 +13,100 @@
 #include "gdriver/gDriverMethods.h"
 
 static constexpr const char *TAG = "gDriverHttp";
-static esp_err_t checkFolderExists(httpd_req_t *req,const char * folderName);
-static esp_err_t httpCreateFolder(httpd_req_t *req, const char * folderName);
-static std::unique_ptr<char> createFolderAndGetID(const char * folderName);
 
-inline deleted_unique_ptr<cJSON> createCJson(char * data) {
-    return deleted_unique_ptr<cJSON>(cJSON_Parse(reinterpret_cast<const char *>(data)),
-                              [](cJSON *cjson) {
-                                  cJSON_Delete(cjson);
-                              });
-}
 
-esp_err_t checkFolderExistHandler(httpd_req_t *req) {
-    return checkFolderExists(req, "serra");
-}
+static std::unique_ptr<char> createFolderAndGetID(const char *folderName);
 
-esp_err_t createFolderHandler(httpd_req_t *req) {
-    return httpCreateFolder(req, "serra");
+static std::unique_ptr<char> getFolderParentId(const char *folderParent);
+
+static std::unique_ptr<char> getFileId(const char *metadata);
+
+static std::unique_ptr<char> cloneString(cJSON *obj);
+
+inline deleted_unique_ptr<cJSON> createCJson(const char *data) {
+    return deleted_unique_ptr<cJSON>(cJSON_Parse(data),
+                                     [](cJSON *cjson) {
+                                         cJSON_Delete(cjson);
+                                     });
 }
 
 void saveImage(const char *folderName, uint8_t *data, size_t size) {
-    if (gDriverToken.tokenValid()) {
-        auto body = searchForFolder(folderName);
-        if (body) {
-            ESP_LOGI(TAG, "%s", body.get());
-            auto root = createCJson(body.get());
-            cJSON *error = cJSON_GetObjectItem(root.get(), "error");
-            if (error == nullptr){
-                cJSON *files = cJSON_GetObjectItem(root.get(), "files");
-                if (files != nullptr){
-                    uint16_t  arraySize = cJSON_GetArraySize(files);
-                    if (arraySize == 0){
-                        auto response = createFolderAndGetID(folderName);
-                    }
-                }
-            }
-        }
+    char fileName[64];
+    struct tm timeinfo = {0};
+    time_t now = time(nullptr);
+    localtime_r(&now, &timeinfo);
+    strftime(fileName, sizeof(fileName), "%F-%T.jpeg", &timeinfo);
+    ESP_LOGI(TAG, "Filename: %s", fileName);
+    auto parentId = getFolderParentId(folderName);
+    if (!parentId) {
+        return;
     }
+    auto fileMetadata = createFileMetadata(parentId.get(), fileName);
+    ESP_LOGI(TAG, "file metadata: %s", fileMetadata.get());
+    auto fileId = getFileId(fileMetadata.get());
+    uploadFileData(fileId.get(), data, size);
 }
 
-std::unique_ptr<char> createFolderAndGetID(const char * folderName){
-//    auto response = createFolder(folderName);
-//    if (!response){
-//        ESP_LOGE(TAG, "Unable to create %s", folderName);
-//        return std::unique_ptr<char>();
-//    }
-//    auto root = createCJson(response.get());
-//    if (!root){
-//        ESP_LOGE(TAG, "Unable to parse creation result of folder  %s", folderName);
-//        return std::unique_ptr<char>();
-//    }
-//    cJSON *error = cJSON_GetObjectItem(root.get(), "error");
-//    if (error != nullptr){
-//        ESP_LOGE(TAG, "Error creating %s: %s", folderName, error->valuestring);
-//        return std::unique_ptr<char>();
-//    }
-//    cJSON *id = cJSON_GetObjectItem(root.get(), "id");
-//    if (id == nullptr){
-//        ESP_LOGE(TAG, "Unable to get the folder id for  %s", folderName);
-//        return std::unique_ptr<char>();
-//    }
-    return std::unique_ptr<char>();
-}
+std::unique_ptr<char> getFolderParentId(const char *folderParent) {
 
-
-esp_err_t checkFolderExists(httpd_req_t *req, const char * folderName) {
-    if (gDriverToken.tokenValid()) {
-        auto body = searchForFolder(folderName);
-        if (body) {
-            ESP_LOGI(TAG, "%s", body.get());
-            auto root = createCJson(body.get());
-            cJSON *error = cJSON_GetObjectItem(root.get(), "error");
-            if (error != nullptr){
-                httpd_resp_sendstr(req, reinterpret_cast<char *>(error->valuestring));
-            } else {
-                cJSON *files = cJSON_GetObjectItem(root.get(), "files");
-                if (files == nullptr){
-                    httpd_resp_sendstr(req, "Unable to parse response \r\n");
-                    return ESP_OK;
-                }
-                uint16_t  arraySize = cJSON_GetArraySize(files);
-                if (arraySize == 0){
-                    httpd_resp_sendstr(req, "Folder doesn't exist");
-                } else {
-                    httpd_resp_sendstr(req, "Folder exist");
-                }
+    if (!gDriverToken.tokenValid()) {
+        ESP_LOGE(TAG, "Token no more valid");
+        return std::unique_ptr<char>();
+    }
+    auto body = searchForFolder(folderParent);
+    if (!body) {
+        return std::unique_ptr<char>();
+    }
+    auto root = createCJson(body.get());
+    cJSON *error = cJSON_GetObjectItem(root.get(), "error");
+    if (error != nullptr) {
+        ESP_LOGE(TAG, "Error checking if %s exist: %s", folderParent, error->valuestring);
+        return std::unique_ptr<char>();
+    }
+    auto files = cJSON_GetObjectItem(root.get(), "files");
+    if (files != nullptr && cJSON_IsArray(files)) {
+        uint16_t arraySize = cJSON_GetArraySize(files);
+        if (arraySize == 0) {
+            return createFolderAndGetID(folderParent);
+        } else {
+            auto firstElement = cJSON_GetArrayItem(files, 0);
+            if (firstElement == nullptr) {
+                ESP_LOGE(TAG, "Unable to get information on %s", folderParent);
+                return createFolderAndGetID(folderParent);
             }
-            httpd_resp_sendstr(req, "\n\r");
+            auto jsonId = cJSON_GetObjectItem(firstElement, "id");
+            return cloneString(jsonId);
         }
-
     } else {
-        httpd_resp_sendstr(req, "token expired or invalid\n\r");
+        ESP_LOGE(TAG, "Error checking if %s exist: invalid list of files", folderParent);
+        return std::unique_ptr<char>();
     }
-
-    return ESP_OK;
 }
 
-esp_err_t httpCreateFolder(httpd_req_t *req, const char * folderName) {
-    if (gDriverToken.tokenValid()) {
-        auto body = createFolder(folderName);
-        if (body) {
-            ESP_LOGI(TAG, "%s", body.get());
-            auto root = createCJson(body.get());
-            cJSON *error = cJSON_GetObjectItem(root.get(), "error");
-            if (error != nullptr){
-                httpd_resp_sendstr(req, reinterpret_cast<char *>(error->valuestring));
-            } else {
-                cJSON *files = cJSON_GetObjectItem(root.get(), "files");
-                if (files == nullptr){
-                    httpd_resp_sendstr(req, "Unable to parse response \r\n");
-                    return ESP_OK;
-                }
-                uint16_t  arraySize = cJSON_GetArraySize(files);
-                if (arraySize == 0){
-                    httpd_resp_sendstr(req, "Folder doesn't exist");
-                } else {
-                    httpd_resp_sendstr(req, "Folder exist");
-                }
-            }
-            httpd_resp_sendstr(req, "\n\r");
-        }
+std::unique_ptr<char> createFolderAndGetID(const char *folderName) {
 
-    } else {
-        httpd_resp_sendstr(req, "token expired or invalid\n\r");
+    auto response = createFolder(folderName);
+    if (!response) {
+        ESP_LOGE(TAG, "Unable to create %s", folderName);
+        return std::unique_ptr<char>();
     }
-
-    return ESP_OK;
+    auto root = createCJson(response.get());
+    if (!root) {
+        ESP_LOGE(TAG, "Unable to parse creation result of folder  %s", folderName);
+        return std::unique_ptr<char>();
+    }
+    cJSON *error = cJSON_GetObjectItem(root.get(), "error");
+    if (error != nullptr) {
+        ESP_LOGE(TAG, "Error creating %s: %s", folderName, error->valuestring);
+        return std::unique_ptr<char>();
+    }
+    cJSON *jsonId = cJSON_GetObjectItem(root.get(), "id");
+    if (jsonId == nullptr) {
+        ESP_LOGE(TAG, "Unable to get the folder id for  %s", folderName);
+        return std::unique_ptr<char>();
+    }
+    return cloneString(jsonId);
 }
-
 
 esp_err_t getUserCodeHandler(httpd_req_t *req) {
     HttpClient httpClient;
@@ -169,9 +136,9 @@ esp_err_t getUserCodeHandler(httpd_req_t *req) {
 
             auto root = createCJson(body.get());
             if (root) {
-                cJSON *error = cJSON_GetObjectItem(root.get(), "error");
-                if (error != nullptr) {
-                    httpd_resp_sendstr(req, reinterpret_cast<char *>(error->valuestring));
+                cJSON *jsonError = cJSON_GetObjectItem(root.get(), "error");
+                if (jsonError != nullptr) {
+                    httpd_resp_sendstr(req, reinterpret_cast<char *>(jsonError->valuestring));
                 } else {
                     cJSON *jsonDeviceCode = cJSON_GetObjectItem(root.get(), "device_code");
                     cJSON *jsonInterval = cJSON_GetObjectItem(root.get(), "interval");
@@ -202,5 +169,41 @@ esp_err_t getUserCodeHandler(httpd_req_t *req) {
 void initGDriver() {
     gDriverToken.init();
 
+}
+
+std::unique_ptr<char> cloneString(cJSON *obj) {
+    if (cJSON_IsString(obj) || cJSON_IsRaw(obj)) {
+        size_t idLen = strlen(obj->valuestring);
+        auto id = std::unique_ptr<char>(new char[idLen + 1]);
+        memcpy(id.get(), obj->valuestring, idLen+1);
+        return id;
+    } else {
+        return std::unique_ptr<char>();
+    }
+}
+
+std::unique_ptr<char> getFileId(const char *metadata) {
+
+    auto root = createCJson(metadata);
+    if (!root) {
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != nullptr) {
+            ESP_LOGE(TAG, "Error before: %s\n", error_ptr);
+        } else {
+            ESP_LOGE(TAG, "Unable to parse file metadata");
+        }
+        return std::unique_ptr<char>();
+    }
+    cJSON *jsonError = cJSON_GetObjectItem(root.get(), "error");
+    if (jsonError != nullptr) {
+        ESP_LOGE(TAG, "error creating file: %s ", jsonError->valuestring);
+        return std::unique_ptr<char>();
+    }
+    cJSON *jsonId = cJSON_GetObjectItem(root.get(), "id");
+    if (jsonId == nullptr || !cJSON_IsString(jsonId)){
+        ESP_LOGE(TAG,"Unable to get the file id");
+        return std::unique_ptr<char>();
+    }
+    return cloneString(jsonId);
 }
 

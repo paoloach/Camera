@@ -1,10 +1,10 @@
 
-idf_component_register(SRCS  app_wifi.c
+idf_component_register(SRCS cameraWifi.c
                             Httpd.c
-                            app_camera.c
-                            app_sntp.c
-                            app_illuminator.c
-                            app_main.c
+        cameraSetup.c
+        cameraSntp.c
+        cameraIlluminator.c
+        cameraMain.c
                             settings.c
                             gDriverHttp.cpp
                             gdriver/HttpData.cpp

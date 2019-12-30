@@ -67,7 +67,7 @@ esp_err_t HttpClient::post(const char *url, std::list<Property> &&properties,
     setMethod(HTTP_METHOD_POST);
 
     for (auto &header : headers) {
-        error = setHeader( header.key, header.value);
+        error = setHeader(header.key, header.value);
         if (error != ESP_OK) {
             ESP_LOGE(TAG, "Error setting header: 0x%x", error);
         }
@@ -85,9 +85,76 @@ esp_err_t HttpClient::post(const char *url, std::list<Property> &&properties,
     return ESP_OK;
 }
 
+esp_err_t HttpClient::post(const char *url, const char * body, std::list<Header> &&headers) {
+    esp_err_t error;
+
+    ESP_LOGI(TAG, "POST at %s", url);
+
+    data.clear();
+
+    esp_http_client_set_url(client.get(), url);
+    setMethod(HTTP_METHOD_POST);
+
+    size_t bodyLength=strlen(body);
+    addAuthorization();
+    addContentLength(bodyLength);
+    for (auto &header : headers) {
+        error = setHeader(header.key, header.value);
+        if( error != ESP_OK) {
+            ESP_LOGE(TAG, "Error setting header: 0x%x", error);
+            return error;
+        }
+    }
+    error = esp_http_client_set_post_field(client.get(), body, bodyLength);
+    if (error != ESP_OK){
+        ESP_LOGE(TAG,"Error setting post field: 0x%x", error);
+        return error;
+    }
+
+
+    error = esp_http_client_perform(client.get());
+    if (error != ESP_OK) {
+        ESP_LOGI(TAG, "Error perform post request field: 0x%x", error);
+        return error;
+    }
+    return ESP_OK;
+}
+
+esp_err_t HttpClient::patch(const char *url,const uint8_t * body,  size_t bodySize, std::list<Header> &&headers) {
+    esp_err_t error;
+
+    ESP_LOGI(TAG, "PATCH at %s", url);
+
+    data.clear();
+
+    esp_http_client_set_url(client.get(), url);
+    setMethod(HTTP_METHOD_PATCH);
+
+    addAuthorization();
+    addContentLength(bodySize);
+    for (auto &header : headers) {
+        error = setHeader(header.key, header.value);
+        if( error != ESP_OK) {
+            ESP_LOGE(TAG, "Error setting header: 0x%x", error);
+            return error;
+        }
+    }
+    error = esp_http_client_set_post_field(client.get(), reinterpret_cast<const char *>(body), bodySize);
+    if (error != ESP_OK){
+        ESP_LOGE(TAG,"Error setting post field: 0x%x", error);
+        return error;
+    }
+
+
+    error = esp_http_client_perform(client.get());
+    if (error != ESP_OK) {
+        ESP_LOGI(TAG, "Error perform post request field: 0x%x", error);
+        return error;
+    }
+    return ESP_OK;
+}
 
 esp_err_t HttpClient::postJson(const char *url, const char *body, std::list<Property> &&headers, bool includeAuth) {
-    uint16_t len = 0;
     esp_err_t error;
 
     ESP_LOGI(TAG, "POST at %s", url);
@@ -98,27 +165,17 @@ esp_err_t HttpClient::postJson(const char *url, const char *body, std::list<Prop
     setMethod(HTTP_METHOD_POST);
 
     for (auto &header : headers) {
-        error = setHeader( header.key, header.value);
+        error = setHeader(header.key, header.value);
         if (error != ESP_OK) {
             ESP_LOGE(TAG, "Error setting header: 0x%x", error);
         }
     }
 
     if (includeAuth) {
-        uint16_t bearerLen = BEARER_HEADER_LEN + getAccessTokenLen();
-        auto bearer = std::unique_ptr<char>(new char[bearerLen + 1]);
-        memcpy(bearer.get(), BEARER_HEADER, BEARER_HEADER_LEN);
-        memcpy(bearer.get() + BEARER_HEADER_LEN, getAccessToken(), getAccessTokenLen());
-        bearer.get()[bearerLen] = 0;
-        error = setHeader( AUTHORIZATION_HEADER, bearer.get());
-        if (error != ESP_OK) {
-            ESP_LOGE(TAG, "Error setting header: %d", error);
-        }
-
+        addAuthorization();
     }
 
-
-    setHeader( "content-type", "application/json");
+    setHeader("content-type", "application/json");
 
     error = esp_http_client_set_post_field(client.get(), body, strlen(body));
     if (error != ESP_OK) {
@@ -131,6 +188,18 @@ esp_err_t HttpClient::postJson(const char *url, const char *body, std::list<Prop
     return ESP_OK;
 }
 
+
+void HttpClient::addAuthorization() {
+    uint16_t bearerLen = BEARER_HEADER_LEN + getAccessTokenLen();
+    auto bearer = std::unique_ptr<char>(new char[bearerLen + 1]);
+    memcpy(bearer.get(), BEARER_HEADER, BEARER_HEADER_LEN);
+    memcpy(bearer.get() + BEARER_HEADER_LEN, getAccessToken(), getAccessTokenLen());
+    bearer.get()[bearerLen] = 0;
+    auto error = setHeader(AUTHORIZATION_HEADER, bearer.get());
+    if (error != ESP_OK) {
+        ESP_LOGE(TAG, "Error setting header: %d", error);
+    }
+}
 
 esp_err_t HttpClient::eventHandler(esp_http_client_event_t *evt) {
     auto *httpClient = static_cast<HttpClient *>(evt->user_data);
@@ -167,7 +236,7 @@ esp_err_t HttpClient::get(const char *url, std::list<Property> &&headers, bool i
 
 
     for (auto &header : headers) {
-        error = setHeader( header.key, header.value);
+        error = setHeader(header.key, header.value);
         if (error != ESP_OK) {
             ESP_LOGE(TAG, "Error setting header: %d", error);
         }
@@ -179,7 +248,7 @@ esp_err_t HttpClient::get(const char *url, std::list<Property> &&headers, bool i
         memcpy(bearer.get(), BEARER_HEADER, BEARER_HEADER_LEN);
         memcpy(bearer.get() + BEARER_HEADER_LEN, getAccessToken(), getAccessTokenLen());
         bearer.get()[bearerLen] = 0;
-        error = setHeader( AUTHORIZATION_HEADER, bearer.get());
+        error = setHeader(AUTHORIZATION_HEADER, bearer.get());
         if (error != ESP_OK) {
             ESP_LOGE(TAG, "Error setting header: %d", error);
         }
@@ -193,4 +262,13 @@ esp_err_t HttpClient::get(const char *url, std::list<Property> &&headers, bool i
 
 
     return ESP_OK;
+}
+
+void HttpClient::addContentLength(size_t size) {
+    char buffer[20];
+    itoa(size, buffer, 10);
+    auto error = setHeader(CONTENT_LENGTH, buffer);
+    if (error != ESP_OK) {
+        ESP_LOGE(TAG, "Error setting content length header: %d", error);
+    }
 }

@@ -5,11 +5,11 @@
 #include "esp_camera.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "app_camera.h"
+#include "cameraSetup.h"
 
 static const char *TAG = "Camera";
 
-void app_camera_reset_defaults() {
+void cameraResetDefaults() {
   ESP_LOGI(TAG, "---------------- RESET_DEFAULT");
   sensor_t *s = esp_camera_sensor_get();
   if (s != NULL) {
@@ -75,7 +75,7 @@ void app_camera_startup() {
     return;
   }
 
-  app_camera_reset_defaults();
+    cameraResetDefaults();
 //esp_camera_load_from_nvs("camera");
 }
 

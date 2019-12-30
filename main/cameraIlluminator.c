@@ -2,7 +2,7 @@
 #include "driver/ledc.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "app_illuminator.h"
+#include "cameraIlluminator.h"
 
 
 static const char *TAG = "Illuminator";

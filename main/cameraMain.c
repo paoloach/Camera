@@ -9,15 +9,15 @@
 #include "nvs_flash.h"
 #include "sdkconfig.h"
 #include "settings.h"
-#include "app_wifi.h"
-#include "app_camera.h"
+#include "cameraWifi.h"
+#include "cameraSetup.h"
 #include "Httpd.h"
 #include "app_lcd.h"
-#include "app_illuminator.h"
+#include "cameraIlluminator.h"
 #ifdef CONFIG_MDNS_ENABLED
 #include "mdns.h"
 #endif
-#include "app_sntp.h"
+#include "cameraSntp.h"
 
 EventGroupHandle_t event_group;
 const char * HOSTNAME="achdjianCamera";

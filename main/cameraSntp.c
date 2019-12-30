@@ -8,7 +8,7 @@
 #include "freertos/task.h"
 #include "sdkconfig.h"
 #include "esp_log.h"
-#include "app_wifi.h"
+#include "cameraWifi.h"
 #include "esp_sntp.h"
 
 
