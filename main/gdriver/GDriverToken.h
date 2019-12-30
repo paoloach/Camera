@@ -19,6 +19,7 @@ public:
     void waitForAuthorized(uint16_t interval, uint16_t expiringTime);
     bool tokenValid();
     void init();
+    bool refreshToken();
 private:
     static void waitForAuthorizedTaskRTos(void *);
 
@@ -27,7 +28,7 @@ private:
     static void refreshTaskRTos(void *);
 
     void refreshTokenTask();
-    bool refreshToken();
+
 
     static void extractAccessToken(const cJSON *pJson);
 

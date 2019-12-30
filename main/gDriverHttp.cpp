@@ -10,7 +10,7 @@
 #include "settings.h"
 #include <cJSON.h>
 #include "gdriver/delete_unique_ptr.h"
-#include "gdriver/gDriverMethods.h"
+#include "gdriver/gDriveMethods.h"
 
 static constexpr const char *TAG = "gDriverHttp";
 
@@ -168,6 +168,13 @@ esp_err_t getUserCodeHandler(httpd_req_t *req) {
 
 void initGDriver() {
     gDriverToken.init();
+
+}
+
+esp_err_t postRefreshTokenHandler(httpd_req_t *req) {
+    if(gDriverToken.tokenValid()){
+
+    }
 
 }
 

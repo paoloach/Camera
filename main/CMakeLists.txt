@@ -11,7 +11,7 @@ idf_component_register(SRCS cameraWifi.c
                             gdriver/HttpClient.cpp
                             gdriver/GDriverToken.cpp
                             gdriver/TokenCreation.cpp
-                            gdriver/gDriverMethods.cpp
+        gdriver/gDriveMethods.cpp
         INCLUDE_DIRS "include"
                      ../components/esp32-camera/driver/include
                      ../components/esp32-camera/conversions/include

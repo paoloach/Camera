@@ -32,8 +32,7 @@ HttpClient::HttpClient() {
 }
 
 
-esp_err_t HttpClient::post(const char *url, std::list<Property> &&properties,
-                           std::list<Property> &&headers) {
+esp_err_t HttpClient::post(const char *url, std::list<Property> &&properties, std::list<Header> &&headers) {
     uint16_t len = 0;
     esp_err_t error;
 

@@ -38,7 +38,7 @@ class HttpClient {
 public:
     HttpClient();
 
-    esp_err_t post(const char *url, std::list<Property> &&properties, std::list<Property> &&headers);
+    esp_err_t post(const char *url, std::list<Property> &&properties, std::list<Header> &&headers);
     esp_err_t post(const char *url,const char * body,  std::list<Header> &&headers);
     esp_err_t patch(const char *url,const uint8_t * body,  size_t bodySize, std::list<Header> &&headers);
     esp_err_t postJson(const char *url, const char * body, std::list<Property> &&headers, bool includeAuth);

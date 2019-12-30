@@ -180,7 +180,7 @@ bool GDriverToken::refreshToken() {
     Property propSecret(CLIENT_SECRET, CLIENT_SECRET_LEN, clientSecret(), clientSecretLen());
     Property propGrant(GRANT, GRANT_LEN, GRANT_TYPE, GRANT_TYPE_LEN);
 
-    Property headerContentType(CONTENT_TYPE, CONTENT_TYPE_LEN, CONTENT_TYPE_FORM, CONTENT_TYPE_FORM_LEN);
+    Header headerContentType{CONTENT_TYPE, CONTENT_TYPE_FORM};
 
     HttpClient httpClient;
     auto error = httpClient.post("https://oauth2.googleapis.com/token", {propRefreshToken, propCode, propClientId, propSecret, propGrant},
