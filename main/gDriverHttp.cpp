@@ -173,9 +173,10 @@ void initGDriver() {
 
 esp_err_t postRefreshTokenHandler(httpd_req_t *req) {
     if(gDriverToken.tokenValid()){
-
+        gDriverToken.refreshToken();
     }
-
+    httpd_resp_sendstr(req, "\n\r");
+    return ESP_OK;
 }
 
 std::unique_ptr<char> cloneString(cJSON *obj) {

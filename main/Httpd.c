@@ -22,6 +22,31 @@ httpd_handle_t camera_httpd = NULL;
 
 extern EventGroupHandle_t event_group;
 
+#define UINT_MAX_DIGIT 20
+
+
+static esp_err_t setPhotoPeriodHandler(httpd_req_t *req) {
+    int totalLen = req->content_len;
+    char buffer[UINT_MAX_DIGIT+1];
+    memset(buffer, 0, UINT_MAX_DIGIT+1);
+    if (totalLen > UINT_MAX_DIGIT) {
+        totalLen = UINT_MAX_DIGIT;
+    }
+    int readByte = httpd_req_recv(req, buffer, totalLen);
+    if (readByte>0){
+        char * endPtr;
+        uint32_t period = strtol(buffer, &endPtr, 10);
+        if (endPtr > buffer){
+            setPhotoPeriod(period);
+            httpd_resp_sendstr(req, "\n\r");
+        } else {
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Photo period must be an integer value");
+        }
+    } else {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Photo period must be an integer value");
+    }
+    return ESP_OK;
+}
 
 static esp_err_t setClientIdHandler(httpd_req_t *req) {
     char clientId[CLIENT_ID_MAX_SIZE];
@@ -132,6 +157,12 @@ void app_httpd_startup() {
             .method = HTTP_GET,
             .handler = capture_handler,
             .user_ctx = NULL};
+
+    httpd_uri_t setPhotoPeriodUri = {.uri = "/photo-period",
+            .method = HTTP_POST,
+            .handler = setPhotoPeriodHandler,
+            .user_ctx = NULL};
+
     httpd_uri_t setClientIdUri = {.uri = "/client-id",
             .method = HTTP_POST,
             .handler = setClientIdHandler,
@@ -160,6 +191,7 @@ void app_httpd_startup() {
     ESP_LOGI(TAG, "Starting web server on port: '%d'", config.server_port);
     if (httpd_start(&camera_httpd, &config) == ESP_OK) {
         httpd_register_uri_handler(camera_httpd, &capture_uri);
+        httpd_register_uri_handler(camera_httpd, &setPhotoPeriodUri);
         httpd_register_uri_handler(camera_httpd, &setClientIdUri);
         httpd_register_uri_handler(camera_httpd, &setSecretIdURI);
         httpd_register_uri_handler(camera_httpd, &setCodeURI);

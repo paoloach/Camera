@@ -18,6 +18,10 @@ constexpr char GRANT[]="grant_type";
 constexpr uint16_t GRANT_LEN=sizeof(GRANT)-1;
 constexpr char GRANT_TYPE[]="http://oauth.net/grant_type/device/1.0";
 constexpr uint16_t GRANT_TYPE_LEN=sizeof(GRANT_TYPE)-1;
+constexpr char GRANT_TYPE_REFRESH[]="refresh_token";
+constexpr uint16_t GRANT_TYPE_REFRESH_LEN=sizeof(GRANT_TYPE_REFRESH)-1;
+
+
 constexpr char CONTENT_LENGTH[] = "Content-Length";
 constexpr char CONTENT_TYPE[] = "Content-Type";
 constexpr uint16_t CONTENT_TYPE_LEN=sizeof(CONTENT_TYPE)-1;

@@ -11,6 +11,7 @@
 #include "HttpClient.h"
 #include "cJSON.h"
 #include "settings.h"
+#include "GroupSignals.h"
 
 GDriverToken gDriverToken;
 
@@ -20,6 +21,7 @@ GDriverToken::GDriverToken() {
 }
 
 void GDriverToken::waitForAuthorized(uint16_t interval, uint16_t expiringTime) {
+    xEventGroupClearBits(event_group, TOKEN_VALID);
     authorizingInterval = interval;
     authorizingExpireTime = expiringTime;
 
@@ -50,8 +52,7 @@ void GDriverToken::waitForAuthorizedTask() {
         Property propCode(CODE, CODE_LEN, deviceCode(), deviceCodeLen());
         Property propGrant(GRANT, GRANT_LEN, GRANT_TYPE, GRANT_TYPE_LEN);
 
-        Property headerContentType(CONTENT_TYPE, CONTENT_TYPE_LEN,
-                                   CONTENT_TYPE_FORM, CONTENT_TYPE_FORM_LEN);
+        Header headerContentType{CONTENT_TYPE, CONTENT_TYPE_FORM};
 
         HttpClient httpClient;
 
@@ -79,6 +80,7 @@ void GDriverToken::waitForAuthorizedTask() {
                         extractExpireIn(root.get());
                         extractRefreshToken(root.get());
                         exit=true;
+                        xEventGroupSetBits(event_group, TOKEN_VALID);
                         xTaskCreate(refreshTaskRTos, "refresh token", 4096, this, 0,
                                     &refreshTokenHandle);
 
@@ -149,6 +151,7 @@ bool GDriverToken::tokenValid() {
         logTime(expireTime);
         ESP_LOGE(TAG, "Token expired");
         setAccessToken(nullptr);
+        xEventGroupClearBits(event_group, TOKEN_VALID);
         return false;
     }
     return true;
@@ -174,16 +177,15 @@ void GDriverToken::init() {
 }
 
 bool GDriverToken::refreshToken() {
-    Property propRefreshToken(REFRESH_TOKEN, REFRESH_TOKEN_LEN, getRefreshToken(), getRefreshTokenLen());
-    Property propCode(CODE, CODE_LEN, deviceCode(), deviceCodeLen());
     Property propClientId(CLIENT_ID, CLIENT_ID_LEN, clientID(), clientIDLen());
     Property propSecret(CLIENT_SECRET, CLIENT_SECRET_LEN, clientSecret(), clientSecretLen());
-    Property propGrant(GRANT, GRANT_LEN, GRANT_TYPE, GRANT_TYPE_LEN);
+    Property propRefreshToken(REFRESH_TOKEN, REFRESH_TOKEN_LEN, getRefreshToken(), getRefreshTokenLen());
+    Property propGrant(GRANT, GRANT_LEN, GRANT_TYPE_REFRESH, GRANT_TYPE_REFRESH_LEN);
 
     Header headerContentType{CONTENT_TYPE, CONTENT_TYPE_FORM};
 
     HttpClient httpClient;
-    auto error = httpClient.post("https://oauth2.googleapis.com/token", {propRefreshToken, propCode, propClientId, propSecret, propGrant},
+    auto error = httpClient.post("https://oauth2.googleapis.com/token", {propRefreshToken, propClientId, propSecret, propGrant},
                             {headerContentType});
 
     if (error != ESP_OK) {

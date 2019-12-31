@@ -18,6 +18,7 @@ uint16_t getAccessTokenLen(void);
 uint32_t getAccessTokenExpire();
 time_t getAccessTokenExpireTime();
 uint16_t getRefreshTokenLen();
+uint32_t getPhotoPeriod();
 
 void setClientId(const char *clientID, uint16_t len);
 void setSecretId(const char *secretId, uint16_t len);
@@ -25,6 +26,7 @@ void setDeviceCode(const char *deviceCode, uint16_t len);
 void setAccessToken(const char *accessToken);
 void setAccessTokenExpire(uint32_t expire);
 void setRefreshToken(const char *accessToken);
+void setPhotoPeriod(uint32_t newPeriod);
 
 
 extern const char *HOSTNAME;

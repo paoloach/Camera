@@ -11,6 +11,7 @@
 static const char *TAG = "settings";
 static const char *NVS_NAME = "settings";
 static const char  * SETTING_KEY="HTTP_KEY";
+static const char * PHOTO_PERIOD="PhotoPeriod";
 
 static const  char  MAGIC1[16] = "CAMVERSION1.0553";
 
@@ -28,10 +29,11 @@ struct Settings {
   time_t   accessTokenExpireTime;
   uint16_t lenRefreshToken;
   char refreshToken[256];
-
 };
 
 static struct Settings settings;
+static uint32_t photoPeriod;
+static const uint32_t defaultPhotoPeriod=1000*60*60;
 
 static void settingReset() {
   nvs_handle_t handle;
@@ -85,14 +87,19 @@ void settingsStartup() {
       if (strncmp(settings.magic,MAGIC1, sizeof(settings.magic) ) != 0){
         ESP_LOGE(TAG, "WRONG Setting data for key %s", SETTING_KEY);
         settingReset();
-
       } else {
         ESP_LOGI(TAG, "Settings loaded from NVS");
       }
-
     } else {
       settingReset();
     }
+
+    ret = nvs_get_u32(handle, PHOTO_PERIOD, &photoPeriod);
+    if (ret != ESP_OK){
+        photoPeriod=defaultPhotoPeriod;
+    }
+
+
     nvs_close(handle);
   } else {
     settingReset();
@@ -131,6 +138,23 @@ void setAccessTokenExpire(uint32_t expire) {
   settings.accessTokenExpire=expire;
   settings.accessTokenExpireTime=expire+time(NULL);
   settingsSave();
+}
+
+void setPhotoPeriod(uint32_t newPeriod) {
+    nvs_handle_t handle;
+    photoPeriod=newPeriod;
+    esp_err_t ret = nvs_open(NVS_NAME, NVS_READONLY, &handle);
+    if (ret == ESP_OK) {
+        ret = nvs_set_u32(handle, PHOTO_PERIOD,&photoPeriod);
+        if (ret == ESP_OK) {
+            nvs_commit(handle);
+        } else {
+            ESP_LOGE(TAG,"Error (%d) saving photoPeriod",ret);
+        }
+        nvs_close(handle);
+    } else {
+        ESP_LOGE(TAG,"Error (%d) opening settings",ret);
+    }
 }
 
 void setRefreshToken(const char *refreshToken) {
@@ -172,6 +196,10 @@ uint16_t getAccessTokenLen(void) {
 }
 uint16_t getRefreshTokenLen(void) {
   return settings.lenRefreshToken;
+}
+
+uint32_t getPhotoPeriod(){
+    return photoPeriod;
 }
 
 uint32_t getAccessTokenExpire() {
