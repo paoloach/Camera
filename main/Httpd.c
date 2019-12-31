@@ -22,7 +22,23 @@ httpd_handle_t camera_httpd = NULL;
 
 extern EventGroupHandle_t event_group;
 
+#define VERSION "1.0"
 #define UINT_MAX_DIGIT 20
+
+static esp_err_t getAboutHandler(httpd_req_t *req) {
+    char buffer[100];
+    uint8_t mac[8];
+
+
+    esp_efuse_mac_get_default(mac);
+    sprintf(buffer, "ach-camera version: "VERSION"\nMac address: "MACSTR,  MAC2STR(mac));
+
+    ESP_LOGI(TAG,"About len: %d", strlen(buffer));
+
+    httpd_resp_sendstr(req, buffer);
+    httpd_resp_set_type(req,"text/plain");
+    return ESP_OK;
+}
 
 
 static esp_err_t getPhotoPeriodHandler(httpd_req_t *req) {
@@ -167,6 +183,11 @@ void app_httpd_startup() {
             .handler = capture_handler,
             .user_ctx = NULL};
 
+    httpd_uri_t getAboutUri = {.uri = "/about",
+            .method = HTTP_GET,
+            .handler = getAboutHandler,
+            .user_ctx = NULL};
+
     httpd_uri_t setPhotoPeriodUri = {.uri = "/photo-period",
             .method = HTTP_POST,
             .handler = setPhotoPeriodHandler,
@@ -197,21 +218,16 @@ void app_httpd_startup() {
             .handler = getUserCodeHandler,
             .user_ctx = NULL};
 
-    httpd_uri_t refreshCode = {.uri = "/refresh",
-            .method = HTTP_POST,
-            .handler = postRefreshTokenHandler,
-            .user_ctx = NULL};
-
     ESP_LOGI(TAG, "Starting web server on port: '%d'", config.server_port);
     if (httpd_start(&camera_httpd, &config) == ESP_OK) {
         httpd_register_uri_handler(camera_httpd, &capture_uri);
+        httpd_register_uri_handler(camera_httpd, &getAboutUri);
         httpd_register_uri_handler(camera_httpd, &setPhotoPeriodUri);
         httpd_register_uri_handler(camera_httpd, &getPhotoPeriodUri);
         httpd_register_uri_handler(camera_httpd, &setClientIdUri);
         httpd_register_uri_handler(camera_httpd, &setSecretIdURI);
         httpd_register_uri_handler(camera_httpd, &setCodeURI);
         httpd_register_uri_handler(camera_httpd, &getUserCode);
-        httpd_register_uri_handler(camera_httpd, &refreshCode);
     }
 }
 
