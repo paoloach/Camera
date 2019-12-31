@@ -13,6 +13,7 @@ extern "C" {
 void initGDriver();
 esp_err_t getUserCodeHandler(httpd_req_t *req);
 void saveImage(const char * folderName, uint8_t * data, size_t size );
+bool isAuthenticated();
 
 #ifdef __cplusplus
 }

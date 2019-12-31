@@ -171,6 +171,9 @@ void initGDriver() {
 
 }
 
+bool isAuthenticated() {
+    return gDriverToken.tokenValid();
+}
 
 
 std::unique_ptr<char> cloneString(cJSON *obj) {

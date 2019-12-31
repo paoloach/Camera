@@ -21,3 +21,7 @@ GET 192.168.1.151/photo-period
 GET 192.168.1.151/about
 
 ###
+
+GET 192.168.1.151/isAuthenticated
+
+###

@@ -171,6 +171,18 @@ static esp_err_t capture_handler(httpd_req_t *req) {
     return res;
 }
 
+static esp_err_t isAuthenticatedHandler(httpd_req_t *req) {
+    char buffer[UINT_MAX_DIGIT+3];
+    if (isAuthenticated()){
+        httpd_resp_sendstr(req, "yes\n");
+    } else {
+        httpd_resp_sendstr(req, "no\n");
+    }
+    httpd_resp_sendstr(req, buffer);
+    httpd_resp_set_type(req,"text/plain");
+    return ESP_OK;
+}
+
 void app_httpd_startup() {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
@@ -178,7 +190,7 @@ void app_httpd_startup() {
     config.max_uri_handlers = 10;
     config.max_resp_headers = 3;
 
-    httpd_uri_t capture_uri = {.uri = "/",
+    httpd_uri_t captureUri = {.uri = "/",
             .method = HTTP_GET,
             .handler = capture_handler,
             .user_ctx = NULL};
@@ -203,31 +215,38 @@ void app_httpd_startup() {
             .handler = setClientIdHandler,
             .user_ctx = NULL};
 
-    httpd_uri_t setSecretIdURI = {.uri = "/secret-id",
+    httpd_uri_t setSecretIdUri = {.uri = "/secret-id",
             .method = HTTP_POST,
             .handler = setSecretIdHandler,
             .user_ctx = NULL};
 
-    httpd_uri_t setCodeURI = {.uri = "/device-code",
+    httpd_uri_t setCodeUri = {.uri = "/device-code",
             .method = HTTP_POST,
             .handler = setDeviceCodeHandler,
             .user_ctx = NULL};
 
-    httpd_uri_t getUserCode = {.uri = "/getUserCode",
+    httpd_uri_t getUserCodeUri = {.uri = "/getUserCode",
             .method = HTTP_GET,
             .handler = getUserCodeHandler,
             .user_ctx = NULL};
 
+    httpd_uri_t isAuthenticatedUri = {.uri = "/isAuthenticated",
+            .method = HTTP_GET,
+            .handler = isAuthenticatedHandler,
+            .user_ctx = NULL};
+
+
     ESP_LOGI(TAG, "Starting web server on port: '%d'", config.server_port);
     if (httpd_start(&camera_httpd, &config) == ESP_OK) {
-        httpd_register_uri_handler(camera_httpd, &capture_uri);
+        httpd_register_uri_handler(camera_httpd, &captureUri);
         httpd_register_uri_handler(camera_httpd, &getAboutUri);
         httpd_register_uri_handler(camera_httpd, &setPhotoPeriodUri);
         httpd_register_uri_handler(camera_httpd, &getPhotoPeriodUri);
         httpd_register_uri_handler(camera_httpd, &setClientIdUri);
-        httpd_register_uri_handler(camera_httpd, &setSecretIdURI);
-        httpd_register_uri_handler(camera_httpd, &setCodeURI);
-        httpd_register_uri_handler(camera_httpd, &getUserCode);
+        httpd_register_uri_handler(camera_httpd, &setSecretIdUri);
+        httpd_register_uri_handler(camera_httpd, &setCodeUri);
+        httpd_register_uri_handler(camera_httpd, &getUserCodeUri);
+        httpd_register_uri_handler(camera_httpd, &isAuthenticatedUri);
     }
 }
 
