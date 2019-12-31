@@ -87,7 +87,7 @@ void app_camera_startup() {
 
     cameraResetDefaults();
 
-  //  xTaskCreate(cameraTask, "camera task", 4096, NULL, 0, &cameraTaskHandle);
+   xTaskCreate(cameraTask, "camera task", 4096, NULL, 0, &cameraTaskHandle);
 }
 
 void app_camera_shutdown() {
